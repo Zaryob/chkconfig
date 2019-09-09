@@ -4,7 +4,6 @@ TAG = $(VERSION)
 CFLAGS=-g -Wall $(RPM_OPT_FLAGS) -D_GNU_SOURCE
 LDFLAGS+=-g
 MAN=chkconfig.8 ntsysv.8 alternatives.8
-PROG=chkconfig
 BINDIR = /sbin
 SBINDIR = /usr/sbin
 MANDIR = /usr/man
@@ -15,7 +14,7 @@ SUBDIRS = po
 OBJS=chkconfig.o leveldb.o
 NTOBJS=ntsysv.o leveldb.o
 
-all: subdirs $(PROG) ntsysv alternatives
+all: alternatives
 
 subdirs:
 	for d in $(SUBDIRS); do \
@@ -23,30 +22,16 @@ subdirs:
 	|| case "$(MFLAGS)" in *k*) fail=yes;; *) exit 1;; esac;\
 	done && test -z "$$fail"
 
-chkconfig: $(OBJS)
-	$(CC) $(LDFLAGS) -o chkconfig $(OBJS) -lpopt -lselinux -lsepol
 
 alternatives: alternatives.o
 
-ntsysv: $(NTOBJS)
-	$(CC) $(LDFLAGS) -o ntsysv $(NTOBJS) -lnewt -lpopt $(LIBMHACK) -lselinux -lsepol
-
-chkconfig.o: chkconfig.c leveldb.h
-	$(CC) $(CFLAGS) -DVERSION=\"$(VERSION)\" -c chkconfig.c
 
 alternatives.o: alternatives.c
 	$(CC) $(CFLAGS) -DVERSION=\"$(VERSION)\" -c alternatives.c
 
-ntsysv.o: ntsysv.c leveldb.h
-	$(CC) $(CFLAGS) -DVERSION=\"$(VERSION)\" -c ntsysv.c
-
-leveldb.o: leveldb.c leveldb.h
-
 clean:
-	rm -f chkconfig ntsysv $(OBJS) $(NTOBJS)
 	rm -f alternatives alternatives.o
 	make -C po clean
-	rm -f chkconfig-*.tar.gz *~ *.old
 
 install:
 	[ -d $(DESTDIR)/$(BINDIR) ] || mkdir -p $(DESTDIR)/$(BINDIR)
@@ -57,10 +42,6 @@ install:
 	[ -d $(DESTDIR)/$(ALTDATADIR) ] || mkdir -p -m 755 $(DESTDIR)/$(ALTDATADIR)
 	[ -d $(DESTDIR)/usr/lib/systemd ] || mkdir -p -m 755 $(DESTDIR)/usr/lib/systemd
 
-	install -m 755 $(PROG) $(DESTDIR)/$(BINDIR)/$(PROG)
-	ln -s ../../../$(BINDIR)/$(PROG) $(DESTDIR)/usr/lib/systemd/systemd-sysv-install
-
-	install -m 755 ntsysv $(DESTDIR)/$(SBINDIR)/ntsysv
 	install -m 755 alternatives $(DESTDIR)/$(SBINDIR)/alternatives
 	ln -s alternatives $(DESTDIR)/$(SBINDIR)/update-alternatives
 
